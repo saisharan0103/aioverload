@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTHONUTF8: "1"
-      DRY_RUN: "1"
+      DRY_RUN: "0"
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       TYPEFULLY_AI_OVERLOAD: ${{ secrets.TYPEFULLY_AI_OVERLOAD }}
     steps:
