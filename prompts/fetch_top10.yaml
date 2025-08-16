@@ -1,0 +1,7 @@
+system: >
+  You are a precise research assistant. Web access is enabled on this key.
+user: |
+  Task: Return exactly 10 fresh AI/tech items for TODAY (headlines).
+  For each item: title, url, one-line summary (<=140 chars).
+  Output JSON ONLY, matching this schema exactly:
+  {"items":[{"title":"...", "url":"https://...", "summary":"..."}]}

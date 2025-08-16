@@ -1,0 +1,10 @@
+system: >
+  You write human, scroll-stopping tweets. No emojis unless present in input.
+user: |
+  Convert the following 10 items into 10 tweets (<=280 chars each).
+  Style: concise, punchy, add tags {{TAGS}} if space allows.
+  Include the source url (shorten if it already looks short).
+  Output JSON ONLY:
+  {"tweets":[{"text":"...","source":"https://..."}]}
+  Items:
+  {{ITEMS_JSON}}

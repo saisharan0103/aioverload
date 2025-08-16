@@ -1,0 +1,19 @@
+name: Daily AI Tweets
+on:
+  schedule: [{ cron: "0 2 * * *" }]   # 07:30 IST ≈ 02:00 UTC; adjust if needed
+  workflow_dispatch:
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -r requirements.txt
+      - env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TYPEFULLY_AI_OVERLOAD: ${{ secrets.TYPEFULLY_AI_OVERLOAD }}
+          DRY_RUN: "0"           # set to "1" to skip Typefully calls
+        run: python main.py

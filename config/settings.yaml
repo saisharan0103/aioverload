@@ -1,0 +1,6 @@
+model: "gemini-1.5-flash"
+tags: ["#AI", "#Tech"]
+logs_path: "runs/tweets_log.jsonl"
+artifacts_dir: "runs"
+max_tweets_per_day: 10
+strict_json: true

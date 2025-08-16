@@ -1,0 +1,4 @@
+accounts:
+  - name: AI_OVERLOAD
+    enabled: true
+    typefully_key_env: TYPEFULLY_AI_OVERLOAD
