@@ -15,5 +15,5 @@ jobs:
       - env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TYPEFULLY_AI_OVERLOAD: ${{ secrets.TYPEFULLY_AI_OVERLOAD }}
-          DRY_RUN: "0"           # set to "1" to skip Typefully calls
+          DRY_RUN: "1"           # set to "1" to skip Typefully calls
         run: python main.py
