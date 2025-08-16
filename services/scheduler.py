@@ -1,5 +1,5 @@
 # services/scheduler.py
-from utils.timezones import ist_today_slots, to_utc_iso  # <- absolute import
+from utils.timezones import ist_today_slots, to_utc_iso  # absolute import
 
 def plan_today_slots(cfg_schedule):
     slots_ist = ist_today_slots(
