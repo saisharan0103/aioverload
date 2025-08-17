@@ -1,4 +1,4 @@
-model: "gemini-2.0-flash"
+model: "gemini-1.5-flash"
 tags: ["#AI", "#Tech"]
 logs_path: "runs/tweets_log.jsonl"
 artifacts_dir: "runs"
