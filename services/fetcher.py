@@ -4,7 +4,7 @@ from utils.gemini_rest import call_gemini_json
 
 def _fetch_n(model, prm, n):
     user = prm["user"].replace("exactly 10", f"exactly {n}")
-    return call_gemini_json(model, prm["system"], user, use_web=True)
+    return call_gemini_json(model, prm["system"], user, use_web=False)
 
 def fetch_top10(model, fetch_prompt_path):
     prm = yaml.safe_load(open(fetch_prompt_path, encoding="utf-8"))
