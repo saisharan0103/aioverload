@@ -7,13 +7,12 @@ def _fetch_n(model, prm, n):
 
 def fetch_top10(model, fetch_prompt_path):
     prm = yaml.safe_load(open(fetch_prompt_path, encoding="utf-8"))
-    try:
-        a=_fetch_n(model, prm, 5); time.sleep(2)
-        b=_fetch_n(model, prm, 5)
-        items = (a.get("items", []) + b.get("items", []))[:10]
-    except Exception:
-        # minimal fallback so pipeline keeps running in DRY_RUN
-        items=[{"title":f"Placeholder AI item {i+1}",
-                "url":f"https://example.com/{i+1}",
-                "summary":"(fallback due to quota)"} for i in range(10)]
+    a=_fetch_n(model, prm, 5); time.sleep(2)
+    b=_fetch_n(model, prm, 5)
+    items = (a.get("items", []) + b.get("items", []))[:10]
+    # validate; no placeholders
+    for it in items:
+        if not it.get("url") or it["url"].startswith("https://example.com"):
+            raise ValueError("Invalid/placeholder items from LLM")
     return {"items": items}
+
