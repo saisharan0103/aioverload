@@ -1,7 +1,4 @@
-import os, json, yaml
-from datetime import datetime
-import pytz
-
+import os, yaml
 from utils.logger import get_logger
 from utils.storage import run_id, write_json, append_jsonl
 from services.fetcher import fetch_top10
@@ -11,16 +8,14 @@ from services.typefully import schedule_draft
 
 log = get_logger("main")
 DRY_RUN = os.getenv("DRY_RUN", "0") == "1"
-IST = pytz.timezone("Asia/Kolkata")
 
-def load_yaml(path): 
+def load_yaml(path):
     return yaml.safe_load(open(path, encoding="utf-8"))
 
-def _show_both(utc_iso: str) -> str:
-    # "2025-08-17T05:30:00Z" -> also show IST
-    dt_utc = datetime.fromisoformat(utc_iso.replace("Z", "+00:00"))
-    dt_ist = dt_utc.astimezone(IST)
-    return f"{utc_iso} / IST {dt_ist.strftime('%Y-%m-%d %H:%M')}"
+def _show_both(utc_str: str) -> str:
+    """Return both UTC and IST time in log for clarity."""
+    from utils.timezones import to_ist_str
+    return f"{utc_str} / {to_ist_str(utc_str)}"
 
 def run():
     rid = run_id()
@@ -30,27 +25,24 @@ def run():
 
     log.info(f"run_id={rid} dry_run={DRY_RUN}")
 
-    # 1) Fetch + 2) Tweetize (abort on failure; no placeholders)
-    try:
-        fetched = fetch_top10(cfg_set["model"], "prompts/fetch_top10.yaml")
-        write_json(f"runs/{rid}/fetch.json", fetched)
+    # 1. Fetch trending content
+    fetched = fetch_top10(cfg_set["model"], "prompts/fetch_top10.yaml")
+    write_json(f"runs/{rid}/fetch.json", fetched)
 
-        tweets = make_tweets(
-            cfg_set["model"], "prompts/tweetizer.yaml",
-            fetched["items"], cfg_set["tags"]
-        )
-        if not tweets or len(tweets) == 0:
-            raise ValueError("Tweetizer returned no tweets.")
-        write_json(f"runs/{rid}/tweets.json", {"tweets": tweets})
-    except Exception as e:
-        log.error(f"ABORT: fetch/tweetize failed: {e}")
-        return
+    # 2. Generate tweets
+    tweets = make_tweets(
+        cfg_set["model"],
+        "prompts/tweetizer.yaml",
+        fetched["items"],
+        cfg_set["tags"],
+    )
+    write_json(f"runs/{rid}/tweets.json", {"tweets": tweets})
 
-    # 3) Slots (IST→UTC)
+    # 3. Plan today’s slots
     utc_slots = plan_today_slots(cfg_sch)
     plan = pair_tweets_slots(tweets, utc_slots)
 
-    # 4) Schedule per account
+    # 4. Schedule per account
     for acc in cfg_acc["accounts"]:
         if not acc.get("enabled"):
             log.info(f"skip account={acc['name']}")
@@ -62,16 +54,24 @@ def run():
         for i, p in enumerate(plan):
             content = p["text"]
             src = p.get("source")
-            # avoid duplicate URL
             if src and src not in content:
                 content += f"\n\n{src}"
 
+            # hard guard: empty & length (280 + URL slack)
+            ctrim = (content or "").strip()
+            if not ctrim:
+                log.error(f"SKIP empty content at idx={i}")
+                continue
+            if len(ctrim) > 320:
+                ctrim = ctrim[:317] + "..."
+
             sched = p["schedule-date"]
+            log.info(f"DEBUG payload preview idx={i+1}: len={len(ctrim)} sched={sched}")
 
             if DRY_RUN:
                 status, resp = 0, {"id": "dry-run"}
             else:
-                resp, status = schedule_draft(key_env, content, sched)
+                resp, status = schedule_draft(key_env, ctrim, sched)
 
             item = {
                 "run_id": rid,
@@ -79,12 +79,13 @@ def run():
                 "utc_time": sched,
                 "status": status,
                 "resp_id": resp.get("id"),
-                "text": content[:140]
+                "text": ctrim[:140],
             }
             append_jsonl(cfg_set["logs_path"], item)
             results.append(item)
-
-            log.info(f"{acc['name']} [{i+1}/{len(plan)}] -> {_show_both(sched)} (status={status})")
+            log.info(
+                f"{acc['name']} [{i+1}/{len(plan)}] -> {_show_both(sched)} (status={status})"
+            )
 
         write_json(f"runs/{rid}/scheduled_{acc['name']}.json", results)
 
