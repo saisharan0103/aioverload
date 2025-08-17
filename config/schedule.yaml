@@ -1,4 +1,4 @@
 timezone: "Asia/Kolkata"
-start: "11:00"          # first slot in IST
+start: "18:00"          # first slot in IST
 interval_min: 120       # every 2 hours
 count: 10               # 10 tweets/day
